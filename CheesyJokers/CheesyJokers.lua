@@ -475,14 +475,14 @@ function SMODS.INIT.CheesyJokers()
         if _center and _center.name == 'Frozen Joker' and (_center.discovered or self.bypass_discovery_center) then 
             self.children.center.scale.y = self.children.center.scale.y * 0.85
         end
-        if _center and _center.name == 'The Universe' then 
+        --[[ if _center and _center.name == 'The Universe' then 
             self.children.center = Sprite(self.T.x, self.T.y, self.T.w, self.T.h, G.ASSET_ATLAS['j_cj_universe'], self.config.center.pos)
             
             self.children.center.atlas.px = 284
             self.children.center.states.hover = self.states.hover
             self.children.center.states.collide.can = false
             self.children.center:set_role({major = self, role_type = 'Glued', draw_major = self})
-        end
+        end ]]
     end
     set_ability_ref = Card.set_ability
     Card.set_ability = function(self, center, initial, delay_sprites)
@@ -490,9 +490,9 @@ function SMODS.INIT.CheesyJokers()
         if center and center.name == 'Frozen Joker' and (center.discovered or self.bypass_discovery_center) then 
             self.T.h = self.T.h * 0.85
         end
-        if center and center.name == 'The Universe' then 
+        --[[ if center and center.name == 'The Universe' then 
             self.T.w = self.T.w * 4
-        end
+        end ]]
     end
 
     card_load_ref = Card.load
@@ -502,9 +502,9 @@ function SMODS.INIT.CheesyJokers()
         if self.config.center.name == "Frozen Joker" then 
             self.T.h = G.CARD_H * 0.85
         end
-        if center and center.name == 'The Universe' then 
+        --[[ if center and center.name == 'The Universe' then 
             self.T.w = G.CARD_W * 4
-        end
+        end ]]
     end
 
 
@@ -723,7 +723,7 @@ function SMODS.INIT.CheesyJokers()
                     return true
                 end}))
             card_eval_status_text(self, 'extra', nil, nil, nil, {message = "Mitosis!"}) 
-        elseif context.joker_main and G.GAME.current_round.hands_played == 0 then
+        elseif context.joker_main then
             return {
                 message = localize{type = 'variable', key = 'a_xmult', vars = {self.ability.extra}},
                 Xmult_mod = self.ability.extra
@@ -1266,7 +1266,7 @@ function SMODS.INIT.CheesyJokers()
         ease_dollars_ref(mod, instant)
     end
     
-    set_ranks_ref = CardArea.set_ranks
+    --[[ set_ranks_ref = CardArea.set_ranks
     CardArea.set_ranks = function(self)
         set_ranks_ref(self)
         for k, card in ipairs(self.cards) do
@@ -1274,7 +1274,7 @@ function SMODS.INIT.CheesyJokers()
                 card.states.drag.can = false
             end
         end
-    end
+    end ]]
 end
 
 
