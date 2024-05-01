@@ -36,22 +36,21 @@ function SMODS.INIT.CheesyJokers()
             slug = 'cj_frozen',
             desc = {
                 "This joker gains {C:chips}Chips{}",
-                "equal to the level of your",
+                "equal to {C:attention}twice{} the level of",
                 "played {C:attention}poker hand{}",
                 "{C:inactive}(Currently {C:chips}+#1#{C:inactive} Chips)"
             },
             config = {
                 extra = {
                     chips = 10,
-                    chip_mod = 1
+                    chip_mod = 2
                 }
             },
             pos = {x = 1, y = 0},
-            rarity = 1,
+            rarity = 2,
             cost = 5,
             loc_def = function(card) return {
-                card.ability.extra.chips, 
-                card.ability.extra.chip_mod} end,
+                card.ability.extra.chips} end,
             blueprint_compat = true,
             eternal_compat = true
         },
@@ -122,17 +121,19 @@ function SMODS.INIT.CheesyJokers()
             name = "Dithered Joker",
             slug = 'cj_dithered',
             desc = {
-                "{C:chips}+123{} Chips if played",
+                "{C:chips}+#1#{} Chips if played",
                 "hand contains exactly",
                 "{C:attention}3{} different suits",
                 "{C:inactive}(Do not need to score){}"
             },
             config = {
-                extra = {chip_mod = 123}
+                extra = {chip_mod = 99}
             },
             pos = {x = 5, y = 0},
             rarity = 1,
             cost = 4,
+            loc_def = function(card) return {
+                card.ability.extra.chip_mod} end,
             blueprint_compat = true,
             eternal_compat = true
         },
@@ -200,7 +201,7 @@ function SMODS.INIT.CheesyJokers()
             config = {
                 extra = {
                     chips = 20,
-                    chip_mod = 5
+                    chip_mod = 4
                 }
             },
             pos = {x = 1, y = 1},
@@ -445,12 +446,12 @@ function SMODS.INIT.CheesyJokers()
                 card.ability.extra} end,
             blueprint_compat = false,
             eternal_compat = true
-        }, 
+        }
     }
 
     for _, v in pairs(jokers) do
         joker = SMODS.Joker:new(
-            v.name, 
+            "CJ " .. v.name, 
             v.slug, 
             v.config,
             v.pos,
@@ -475,14 +476,6 @@ function SMODS.INIT.CheesyJokers()
         if _center and _center.name == 'Frozen Joker' and (_center.discovered or self.bypass_discovery_center) then 
             self.children.center.scale.y = self.children.center.scale.y * 0.85
         end
-        --[[ if _center and _center.name == 'The Universe' then 
-            self.children.center = Sprite(self.T.x, self.T.y, self.T.w, self.T.h, G.ASSET_ATLAS['j_cj_universe'], self.config.center.pos)
-            
-            self.children.center.atlas.px = 284
-            self.children.center.states.hover = self.states.hover
-            self.children.center.states.collide.can = false
-            self.children.center:set_role({major = self, role_type = 'Glued', draw_major = self})
-        end ]]
     end
     set_ability_ref = Card.set_ability
     Card.set_ability = function(self, center, initial, delay_sprites)
@@ -490,9 +483,6 @@ function SMODS.INIT.CheesyJokers()
         if center and center.name == 'Frozen Joker' and (center.discovered or self.bypass_discovery_center) then 
             self.T.h = self.T.h * 0.85
         end
-        --[[ if center and center.name == 'The Universe' then 
-            self.T.w = self.T.w * 4
-        end ]]
     end
 
     card_load_ref = Card.load
@@ -502,9 +492,6 @@ function SMODS.INIT.CheesyJokers()
         if self.config.center.name == "Frozen Joker" then 
             self.T.h = G.CARD_H * 0.85
         end
-        --[[ if center and center.name == 'The Universe' then 
-            self.T.w = G.CARD_W * 4
-        end ]]
     end
 
 
@@ -981,6 +968,31 @@ function SMODS.INIT.CheesyJokers()
                         card_eval_status_text(self, 'extra', nil, nil, nil, {message = localize('k_plus_spectral'), colour = G.C.SECONDARY_SET.Spectral})
                     end
                 end
+            elseif effect == 6 then
+                G.GAME.current_round.free_rerolls = G.GAME.current_round.free_rerolls + reps
+                card_eval_status_text(self, 'extra', nil, nil, nil, {message = "Free Reroll!", colour = G.C.GREEN})
+                calculate_reroll_cost(true)
+            elseif effect == 7 then
+                G.E_MANAGER:add_event(Event({
+                    func = (function()
+                        print(G.GAME.current_round.ai_ability.effect_vars[1])
+                        add_tag(Tag(G.GAME.current_round.ai_ability.effect_vars[1]))
+                        play_sound('generic1', 0.9 + math.random()*0.1, 0.8)
+                        play_sound('holo1', 1.2 + math.random()*0.1, 0.4)
+                        return true
+                    end)
+                }))
+            elseif effect == 8 then
+                G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.4, func = function()
+                    local jimbo = create_card('Joker', G.jokers, nil, nil, nil, nil, 'j_joker')
+                    jimbo:set_edition({negative = true}, true)
+                    jimbo.ability.mult = 2
+                    jimbo.ability.extra_value = -2
+                    jimbo:set_cost()
+                    jimbo:add_to_deck()
+                    G.jokers:emplace(jimbo)
+                    return true end }))
+                delay(0.6)
             else
                 text = "+" .. (reps * 15) .. " Max HP"
                 card_eval_status_text(self, 'extra', nil, nil, nil, {message = text, colour = G.C.RED})
@@ -1109,9 +1121,21 @@ function SMODS.INIT.CheesyJokers()
         end
 
         G.GAME.current_round.ai_ability.condition = math.ceil(pseudorandom('ai_condition'..G.GAME.round_resets.ante) * 7)
-        G.GAME.current_round.ai_ability.effect = math.ceil(pseudorandom('ai_effect'..G.GAME.round_resets.ante) * 5.1)
+        G.GAME.current_round.ai_ability.effect = math.ceil(pseudorandom('ai_effect'..G.GAME.round_resets.ante) * 8.1)
 
         G.GAME.current_round.ai_ability.condition_vars[1] = pseudorandom_element({'Flush', 'Straight', 'Full House'}, pseudoseed('ai_hand'..G.GAME.round_resets.ante))
+        local random_tag = pseudorandom_element({
+            'tag_uncommon', 
+            'tag_foil',
+            'tag_holo',
+            'tag_voucher',
+            'tag_boss',
+            'tag_double',
+            'tag_juggle',
+            'tag_top_up'
+        }, pseudoseed('ai_tag'..G.GAME.round_resets.ante))
+        G.GAME.current_round.ai_ability.effect_vars[1] = random_tag
+        G.GAME.current_round.ai_ability.effect_vars[2] = localize{type = 'name_text', set = 'Tag', key = random_tag, nodes = {}}
     end
 
     reset_ancient_card_ref = reset_ancient_card
@@ -1221,6 +1245,16 @@ function SMODS.INIT.CheesyJokers()
             "create a {C:spectral}Spectral{} card"
         }},
         [6] = {text = {
+            "earn {C:attention}1{} free {C:green}Reroll"
+        }},
+        [7] = {text = {
+            "create a free {C:attention}#2#"
+        }},
+        [8] = {text = {
+            "create a {C:dark_edition}Negative {C:attention}Joker",
+            "that gives {C:mult}+2{} Mult"
+        }},
+        [9] = {text = {
             "gain {X:red,C:white} +15 {C:red} Max HP"
         }},
     }
@@ -1249,7 +1283,7 @@ function SMODS.INIT.CheesyJokers()
     calculate_dollar_bonus_ref = Card.calculate_dollar_bonus
     Card.calculate_dollar_bonus = function(self)
         if self.ability.name == 'High Score' and not self.debuff then
-            if G.GAME.chips * 3 >= G.GAME.blind.chips then return self.ability.extra end
+            if G.GAME.chips >= G.GAME.blind.chips * 3 then return self.ability.extra end
         end
         return calculate_dollar_bonus_ref(self)
     end
@@ -1265,16 +1299,6 @@ function SMODS.INIT.CheesyJokers()
         end
         ease_dollars_ref(mod, instant)
     end
-    
-    --[[ set_ranks_ref = CardArea.set_ranks
-    CardArea.set_ranks = function(self)
-        set_ranks_ref(self)
-        for k, card in ipairs(self.cards) do
-            if card.config.center.name == 'The Universe' then
-                card.states.drag.can = false
-            end
-        end
-    end ]]
 end
 
 
